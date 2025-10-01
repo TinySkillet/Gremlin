@@ -1,45 +1,45 @@
-from dotenv import load_dotenv
+import os
 from google import genai
 from google.genai import types
-import sys
-import os
+from dotenv import load_dotenv
+from sys import argv, exit
 
 load_dotenv()
-
-api_key = os.environ.get("GEMINI_API_KEY")
+API_KEY = os.environ.get("GEMINI_API_KEY")
 
 
 def main():
-    args = sys.argv
 
-    if len(args) < 2:
-        print("Error! Prompt not provided!")
-        sys.exit(1)
+    if not API_KEY:
+        print("GEMINI_API_KEY not found in .env!")
+        exit(1)
 
-    user_prompt = args[1]
+    args = len(argv)
 
-    if len(args) == 3 and args[-1] == "--verbose":
+    if args < 2:
+        print("Prompt required!")
+        exit(1)
+
+    if argv[-1] == "--verbose":
         verbose = True
     else:
         verbose = False
 
-    client = genai.Client(api_key=api_key)
+    user_prompt = argv[1]
 
-    messages = [
-        types.Content(role="user", parts=[types.Part(text=user_prompt)]),
-    ]
+    messages = [types.Content(role="user", parts=[types.Part(text=user_prompt)])]
 
+    client = genai.Client(api_key=API_KEY)
     response = client.models.generate_content(
         model="gemini-2.0-flash-001",
-        contents=messages,
+        contents=messages,  
     )
 
-    print("Response: ", response.text)
+    print(response.text)
 
     if verbose:
-        metadata = response.usage_metadata
-        print("Tokens used for prompt: ", metadata.prompt_token_count)
-        print("Tokens used for response: ", metadata.candidates_token_count)
+        print("Tokens in prompt: ", response.usage_metadata.prompt_token_count)
+        print("Tokens in response: ", response.usage_metadata.candidates_token_count)
 
 
 if __name__ == "__main__":
